@@ -85,7 +85,17 @@ const PRESCRIPTION_RESPONSE_SCHEMA = {
                     name: {
                         type: Type.STRING,
                         description:
-                            "The medicine name as written by the doctor (brand or generic).",
+                            "The brand name as written by the doctor. " +
+                            "If the doctor only wrote a generic name, copy it here as well.",
+                    },
+                    generic_name: {
+                        type: Type.STRING,
+                        description:
+                            "The active generic / salt name(s) for this medicine. " +
+                            "ALWAYS include this even if the doctor only wrote the brand. " +
+                            "For combination drugs, list all actives separated by ' + ' " +
+                            "(e.g. 'Amoxicillin + Clavulanic Acid'). " +
+                            "Empty string only if you truly cannot determine the generic.",
                     },
                     confidence: {
                         type: Type.STRING,
@@ -101,7 +111,7 @@ const PRESCRIPTION_RESPONSE_SCHEMA = {
                             "Empty string if no dose is written or it is illegible.",
                     },
                 },
-                required: ["name", "confidence", "dosage"],
+                required: ["name", "generic_name", "confidence", "dosage"],
             },
         },
     },
@@ -223,24 +233,69 @@ const LAB_REPORT_RESPONSE_SCHEMA = {
 const SYSTEM_INSTRUCTION = `
 You are an experienced pharmacist reading a handwritten prescription.
 
-Your ONLY job is to extract medicine names and their dosages.
+Your ONLY job is to extract medicine names, their generic (salt) names, and
+their dosages.
 
 Strict rules:
 1. Read the handwritten prescription carefully.
 2. Identify the medicine names that are prescribed.
-3. IGNORE the doctor's notes, advice, or instructions (e.g. "after meal", "follow up in 2 weeks").
-4. IGNORE the patient name.
-5. IGNORE the hospital, clinic, or doctor's name and address.
-6. IGNORE the date and any reference numbers.
-7. IGNORE dosages that are NOT attached to a medicine (e.g. generic "mg/kg" advice lines).
+3. For EVERY medicine you extract, also provide the generic / salt name(s).
+   - Common Bangladesh mappings include:
+       Napa / Ace / Fast / Renova / Xcel / Tylenol        -> "Paracetamol"
+       Napa Extra / Ace Plus                                -> "Paracetamol + Caffeine"
+       Seclo / Losectil / Proceptin                         -> "Omeprazole"
+       Sergel / Maxpro / Nexium / Esonix                    -> "Esomeprazole"
+       Zimax / Azith / Azithrocin                           -> "Azithromycin"
+       Cef-3 / Cefim / Cefix / Cephacid                     -> "Cefixime"
+       Moxacil / Tycil / Fimoxyl                            -> "Amoxicillin"
+       Ciprox / Ciprocin                                    -> "Ciprofloxacin"
+       Amdocal / Amlopin / Amlovas                          -> "Amlodipine"
+       Losartan / Losar / Anazid                            -> "Losartan Potassium"
+       Daonil / Comet / Informet / Sugamet                  -> "Metformin HCl"
+       Glimep                                               -> "Glimepiride"
+       Fexo / Fixal / Telfast                                -> "Fexofenadine"
+       Monas / Montec                                       -> "Montelukast"
+       Tofen / Zaditen                                      -> "Ketotifen"
+       Histacin                                             -> "Chlorpheniramine"
+       Toricel / Keto-R                                     -> "Ketorolac"
+       Clofenac / Voltalin                                  -> "Diclofenac Sodium"
+       Naprox / Sonap                                       -> "Naproxen"
+       Calbo-D / Acical-D / Oscal-D                         -> "Calcium + Vitamin D3"
+       Neurobion / Nervex                                   -> "Vitamin B Complex"
+       D-Rise                                               -> "Cholecalciferol (Vitamin D3)"
+       Ranitid / Neoceptin-R                                -> "Ranitidine"
+       Pantonix / Panoral                                   -> "Pantoprazole"
+       Domet                                                -> "Domperidone"
+       Salbinol / Brodil / Ventolin                         -> "Salbutamol"
+       Serotia / Serta                                      -> "Sertraline"
+       Anxinil                                              -> "Clonazepam"
+       Tyrox / Thyrox / Euthyrox                            -> "Levothyroxine Sodium"
+       Lipicon / Atorva / Tiginor                           -> "Atorvastatin"
+       Flucan / Flugal                                      -> "Fluconazole"
+       Ferogen / Feron                                      -> "Ferrous Sulfate + Folic Acid"
+       Augmentin / Moxiclav / Clamox / Clavusef / Tyclav    -> "Amoxicillin + Clavulanic Acid"
+       Enzoflam / Enzoflam Plus / Diclofen / Serralon /
+         Serrafen                                           -> "Diclofenac + Paracetamol + Serratiopeptidase"
+       Hexigel / Hexidine Mouth Gel                         -> "Chlorhexidine Gluconate"
+       Chlorhex                                             -> "Chlorhexidine Gluconate"
+       Orasep Gel                                           -> "Chlorhexidine Gluconate + Lidocaine"
+4. For combination drugs, list all active ingredients separated by " + " in
+   the generic_name field (e.g. "Amoxicillin + Clavulanic Acid").
+5. IGNORE the doctor's notes, advice, or instructions (e.g. "after meal", "follow up in 2 weeks").
+6. IGNORE the patient name.
+7. IGNORE the hospital, clinic, or doctor's name and address.
+8. IGNORE the date and any reference numbers.
+9. IGNORE dosages that are NOT attached to a medicine (e.g. generic "mg/kg" advice lines).
    Only keep a dosage if it clearly belongs to a specific medicine.
-8. If a medicine name is unreadable or you are not confident, still include it,
-   but set its "confidence" to "low".
-9. Return ONLY valid JSON. No markdown. No explanation. No code fences. No extra text.
-10. The JSON must match this exact shape:
+10. If a medicine name is unreadable or you are not confident, still include it,
+    but set its "confidence" to "low".
+11. If the doctor only wrote a generic name (no brand), copy the generic name
+    into BOTH the "name" and "generic_name" fields.
+12. Return ONLY valid JSON. No markdown. No explanation. No code fences. No extra text.
+13. The JSON must match this exact shape:
     {
       "medicines": [
-        { "name": "", "confidence": "", "dosage": "" }
+        { "name": "", "generic_name": "", "confidence": "", "dosage": "" }
       ]
     }
     Use "high", "medium", or "low" for confidence. Use empty string for unknown values.
@@ -800,7 +855,21 @@ export async function extractMedicinesFromPrescription(options = {}) {
  * always predictable for downstream callers.
  *
  * Strict output contract:
- *   { medicines: [ { name: string, confidence: "high"|"medium"|"low", dosage: string } ] }
+ *   {
+ *     medicines: [
+ *       {
+ *         name: string,
+ *         generic_name: string,
+ *         confidence: "high" | "medium" | "low",
+ *         dosage: string,
+ *       }
+ *     ]
+ *   }
+ *
+ * `generic_name` is the API/generic/salt name (e.g. "Paracetamol",
+ * "Amoxicillin + Clavulanic Acid") that downstream code uses to look
+ * up alternatives in the medicine DB even when the brand name does
+ * not fuzzy-match any local entry.
  */
 function normalizeResponse(parsed) {
     const safeArray = (v) => (Array.isArray(v) ? v : []);
@@ -809,6 +878,8 @@ function normalizeResponse(parsed) {
 
     const medicines = safeArray(parsed.medicines).map((m) => {
         const name = typeof m?.name === "string" ? m.name.trim() : "";
+        const generic_name =
+            typeof m?.generic_name === "string" ? m.generic_name.trim() : "";
         const dosage = typeof m?.dosage === "string" ? m.dosage.trim() : "";
 
         let confidence =
@@ -820,7 +891,7 @@ function normalizeResponse(parsed) {
             confidence = name ? "medium" : "low";
         }
 
-        return { name, confidence, dosage };
+        return { name, generic_name, confidence, dosage };
     });
 
     return { medicines };

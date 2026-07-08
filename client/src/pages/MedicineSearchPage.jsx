@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Tag,
   Building2,
-  DollarSign,
   FlaskConical,
   ChevronDown,
   ChevronUp,
@@ -131,8 +130,8 @@ export default function MedicineSearchPage() {
                   {med.manufacturer}
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700">
-                  <DollarSign className="h-3.5 w-3.5" />
-                  ৳{med.price_bdt} / unit
+                  <span aria-hidden="true">৳</span>
+                  {med.price_bdt} / unit
                 </span>
               </div>
             </div>

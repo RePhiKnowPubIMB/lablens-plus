@@ -80,7 +80,7 @@ export default function HomePage() {
                 Scan Prescription
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link to="/medicine" className="btn-secondary border-white/30 !text-white hover:bg-white/10">
+              <Link to="/medicine" className="btn-secondary bg-white/30 border-white/30 !text-white hover:bg-white/10">
                 <Pill className="h-5 w-5" />
                 Search Medicine
               </Link>

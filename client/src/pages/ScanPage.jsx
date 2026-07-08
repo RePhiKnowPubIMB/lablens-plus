@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { useScan } from "../context/ScanContext.jsx";
 import {
   Upload,
   Camera,
@@ -11,7 +12,6 @@ import {
   ExternalLink,
   Sparkles,
   Building2,
-  DollarSign,
   FlaskConical,
   Stethoscope,
   ListChecks,
@@ -53,11 +53,16 @@ const DOC_TYPES = {
 };
 
 export default function ScanPage() {
+  // The analysis result lives in ScanContext so it survives navigating
+  // away to /medicine or /pharmacy and back. Everything else (file,
+  // preview, loading, error, docType chooser) is per-upload UI state
+  // and stays local to this component.
+  const { result, setResult, clearResult } = useScan();
+
   const [docType, setDocType] = useState(null); // "prescription" | "report"
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null); // { kind: "prescription"|"report", data: ... }
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [showRawText, setShowRawText] = useState(false);
@@ -76,9 +81,12 @@ export default function ScanPage() {
     }
     setFile(selectedFile);
     setPreview(URL.createObjectURL(selectedFile));
-    setResult(null);
+    // Picking a new file invalidates the previously shown result — the
+    // user is implicitly starting a new scan. Clear the context cache
+    // so a stale card doesn't linger behind the upload form.
+    clearResult();
     setError(null);
-  }, []);
+  }, [clearResult]);
 
   const handleDrop = useCallback(
     (e) => {
@@ -93,7 +101,7 @@ export default function ScanPage() {
     if (!file || !docType) return;
     setLoading(true);
     setError(null);
-    setResult(null);
+    clearResult();
 
     try {
       if (docType === "prescription") {
@@ -129,7 +137,9 @@ export default function ScanPage() {
   const resetScan = () => {
     setFile(null);
     setPreview(null);
-    setResult(null);
+    // Clear the context-cached result so "Scan Another" returns the
+    // user to the type-chooser with a clean slate, exactly like before.
+    clearResult();
     setError(null);
     setShowRawText(false);
   };
@@ -453,7 +463,7 @@ function PrescriptionResult({ data, renderConfidence, onScanAnother }) {
                   </div>
                   <div className="flex items-start justify-between gap-4 py-3">
                     <dt className="flex w-28 shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
+                      <span aria-hidden="true">৳</span>
                       Price
                     </dt>
                     <dd className="flex-1 text-right">
@@ -463,7 +473,7 @@ function PrescriptionResult({ data, renderConfidence, onScanAnother }) {
                             <li key={j}>
                               {alt.price != null ? (
                                 <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
-                                  <DollarSign className="h-3 w-3" />
+                                  <span aria-hidden="true">৳</span>
                                   {alt.price}
                                 </span>
                               ) : (
@@ -488,13 +498,23 @@ function PrescriptionResult({ data, renderConfidence, onScanAnother }) {
                     </p>
                   </div>
                 )}
-                {isMatched && med.generic && (
-                  <div className="mt-3 flex justify-end">
+                {((isMatched && med.generic) || med.generic) && (
+                  <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-gray-100 pt-3">
                     <Link
                       to={`/medicine?q=${encodeURIComponent(med.generic)}`}
                       className="inline-flex items-center gap-1 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-100 transition"
                     >
-                      Find Generic <ExternalLink className="h-3 w-3" />
+                      <Pill className="h-3 w-3" />
+                      Find Alternative <ExternalLink className="h-3 w-3" />
+                    </Link>
+                    <Link
+                      to={`/pharmacy?medicine=${encodeURIComponent(
+                        med.matchedMedicine || med.detectedName || med.generic
+                      )}`}
+                      className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition"
+                    >
+                      <Building2 className="h-3 w-3" />
+                      Find in Pharmacy <ExternalLink className="h-3 w-3" />
                     </Link>
                   </div>
                 )}

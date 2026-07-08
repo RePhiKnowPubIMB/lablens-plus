@@ -315,8 +315,14 @@ function cleanupFile(filePath) {
  * generic_name, manufacturer, form, price, and a sorted list of
  * same-generic alternatives. This is the SINGLE place that decides what
  * the client sees — both Gemini and offline OCR produce identical shapes.
+ *
+ * The optional `geminiGenerics` array (same length and order as `detected`)
+ * carries the generic_name the Gemini model itself returned for each
+ * detected brand. We use it as a FALLBACK to look up alternatives when the
+ * fuzzy matcher could not find the brand in the local DB — e.g. an
+ * unfamiliar brand whose salt composition is still identifiable.
  */
-function buildResponse(detected) {
+function buildResponse(detected, geminiGenerics = []) {
   const rawMedicines = Array.isArray(detected) ? detected : [];
 
   // Run every name through the fuzzy matcher against data/medicines.js.
@@ -326,25 +332,48 @@ function buildResponse(detected) {
 
   // Build the compact public contract:
   //   { detectedName, matchedMedicine, generic, confidence, alternatives[] }
-  const medicines = matched.map((m) => {
+  const medicines = matched.map((m, idx) => {
     const detectedName = m.name || "";
     const isMatched = m.match_status === "matched" && m.brand_name;
     const matchedMedicine = isMatched ? m.brand_name : "";
-    const generic = m.generic_name || "";
+
+    // Prefer the DB-resolved generic when the brand matched. Otherwise
+    // fall back to whatever generic_name Gemini provided (if any) so
+    // the alternatives list is still anchored to a real salt.
+    let generic = m.generic_name || "";
+    let resolvedByMatcher = isMatched;
+    if (!generic) {
+      const fromGemini =
+        idx < geminiGenerics.length
+          ? (geminiGenerics[idx] || "").trim()
+          : "";
+      if (fromGemini) {
+        generic = fromGemini;
+      }
+    }
+
     const confidence = m.confidence || "low";
 
-    // Resolve alternatives from data/medicines.js. Only for matched rows
-    // (an unknown reading has no anchored generic, so alternatives would
-    // be misleading). Sorted cheapest first.
+    // Resolve alternatives from data/medicines.js. Allowed whenever we
+    // have an anchored generic (either via fuzzy match or Gemini's
+    // generic_name fallback). Sorted cheapest first.
     let alternatives = [];
-    if (isMatched && generic) {
+    if (generic) {
+      const genericLc = generic.toLowerCase();
+      const matchedLc = matchedMedicine.toLowerCase();
       alternatives = medicineDB
         .filter(
           (db) =>
             db.generic_name &&
-            db.generic_name.toLowerCase() === generic.toLowerCase() &&
+            db.generic_name.toLowerCase() === genericLc &&
             db.brand_name &&
-            db.brand_name.toLowerCase() !== matchedMedicine.toLowerCase()
+            // When the brand is known, hide the matched brand itself from
+            // the alternatives list. When it is unknown (resolved only via
+            // Gemini's generic_name), we cannot know which DB row was
+            // "the same" so we keep the full set — the frontend shows the
+            // match status so the user can tell the brand wasn't local.
+            (!resolvedByMatcher ||
+              db.brand_name.toLowerCase() !== matchedLc)
         )
         .sort((a, b) => (a.price_bdt ?? Infinity) - (b.price_bdt ?? Infinity))
         .map((db) => ({
@@ -373,7 +402,9 @@ function buildResponse(detected) {
  * `mapGeminiToResponse` from a future refactor still resolves.
  */
 function mapGeminiToResponse(geminiResult) {
-  return buildResponse(geminiResult?.medicines);
+  const meds = Array.isArray(geminiResult?.medicines) ? geminiResult.medicines : [];
+  const generics = meds.map((m) => (typeof m?.generic_name === "string" ? m.generic_name : ""));
+  return buildResponse(meds, generics);
 }
 
 /**
@@ -411,7 +442,7 @@ async function analyzeWithGemini(imagePath) {
     e.cause = err;
     throw e;
   }
-  return buildResponse(geminiResult?.medicines);
+  return buildResponse(geminiResult?.medicines, geminiResult?.medicines?.map((m) => m?.generic_name));
 }
 
 /**

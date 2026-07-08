@@ -114,4 +114,29 @@ export const medicineDB = [
   // === IRON SUPPLEMENT ===
   { brand_name: "Ferogen", generic_name: "Ferrous Sulfate + Folic Acid", strength: "200mg+0.5mg", form: "Tablet", manufacturer: "Square Pharma", price_bdt: 3.0 },
   { brand_name: "Feron", generic_name: "Ferrous Sulfate + Folic Acid", strength: "200mg+0.5mg", form: "Tablet", manufacturer: "Incepta Pharma", price_bdt: 2.5 },
+
+  // === AMOXICILLIN + CLAVULANIC ACID (AUGMENTIN FAMILY) ===
+  { brand_name: "Augmentin", generic_name: "Amoxicillin + Clavulanic Acid", strength: "500mg+125mg", form: "Tablet", manufacturer: "GSK", price_bdt: 65.0 },
+  { brand_name: "Augmentin", generic_name: "Amoxicillin + Clavulanic Acid", strength: "250mg+125mg", form: "Tablet", manufacturer: "GSK", price_bdt: 45.0 },
+  { brand_name: "Augmentin", generic_name: "Amoxicillin + Clavulanic Acid", strength: "1g+200mg", form: "Tablet", manufacturer: "GSK", price_bdt: 110.0 },
+  { brand_name: "Augmentin", generic_name: "Amoxicillin + Clavulanic Acid", strength: "125mg+31.25mg/5ml", form: "Syrup", manufacturer: "GSK", price_bdt: 90.0 },
+  { brand_name: "Moxiclav", generic_name: "Amoxicillin + Clavulanic Acid", strength: "500mg+125mg", form: "Tablet", manufacturer: "Beximco Pharma", price_bdt: 35.0 },
+  { brand_name: "Moxiclav", generic_name: "Amoxicillin + Clavulanic Acid", strength: "250mg+125mg", form: "Tablet", manufacturer: "Beximco Pharma", price_bdt: 25.0 },
+  { brand_name: "Clamox", generic_name: "Amoxicillin + Clavulanic Acid", strength: "500mg+125mg", form: "Tablet", manufacturer: "Square Pharma", price_bdt: 38.0 },
+  { brand_name: "Clavusef", generic_name: "Amoxicillin + Clavulanic Acid", strength: "500mg+125mg", form: "Tablet", manufacturer: "Incepta Pharma", price_bdt: 32.0 },
+  { brand_name: "Tyclav", generic_name: "Amoxicillin + Clavulanic Acid", strength: "500mg+125mg", form: "Tablet", manufacturer: "ACI Ltd", price_bdt: 30.0 },
+
+  // === DICLOFENAC + PARACETAMOL + SERRATIOPEPTIDASE (ENZOFLAM FAMILY) ===
+  { brand_name: "Enzoflam", generic_name: "Diclofenac + Paracetamol + Serratiopeptidase", strength: "50mg+325mg+15mg", form: "Tablet", manufacturer: "Square Pharma", price_bdt: 8.0 },
+  { brand_name: "Enzoflam", generic_name: "Diclofenac + Paracetamol + Serratiopeptidase", strength: "50mg+500mg+10mg", form: "Tablet", manufacturer: "Square Pharma", price_bdt: 9.0 },
+  { brand_name: "Enzoflam Plus", generic_name: "Diclofenac + Paracetamol + Serratiopeptidase", strength: "50mg+325mg+15mg", form: "Tablet", manufacturer: "Square Pharma", price_bdt: 10.0 },
+  { brand_name: "Diclofen", generic_name: "Diclofenac + Paracetamol + Serratiopeptidase", strength: "50mg+325mg+15mg", form: "Tablet", manufacturer: "Beximco Pharma", price_bdt: 7.0 },
+  { brand_name: "Serralon", generic_name: "Diclofenac + Paracetamol + Serratiopeptidase", strength: "50mg+325mg+15mg", form: "Tablet", manufacturer: "Incepta Pharma", price_bdt: 7.5 },
+  { brand_name: "Serrafen", generic_name: "Diclofenac + Paracetamol + Serratiopeptidase", strength: "50mg+500mg+10mg", form: "Tablet", manufacturer: "Renata Ltd", price_bdt: 8.5 },
+
+  // === ORAL GUM PAINT / ANTISEPTIC GEL ===
+  { brand_name: "Hexigel", generic_name: "Chlorhexidine Gluconate", strength: "1% w/w", form: "Gum Paint (Oral Gel)", manufacturer: "ICPA Health", price_bdt: 120.0 },
+  { brand_name: "Hexidine Mouth Gel", generic_name: "Chlorhexidine Gluconate", strength: "0.5% w/w", form: "Gum Paint (Oral Gel)", manufacturer: "ICPA Health", price_bdt: 95.0 },
+  { brand_name: "Chlorhex", generic_name: "Chlorhexidine Gluconate", strength: "0.2% w/v", form: "Mouthwash", manufacturer: "Square Pharma", price_bdt: 80.0 },
+  { brand_name: "Orasep Gel", generic_name: "Chlorhexidine Gluconate + Lidocaine", strength: "0.5%+2%", form: "Gum Paint (Oral Gel)", manufacturer: "ACI Ltd", price_bdt: 110.0 },
 ];
