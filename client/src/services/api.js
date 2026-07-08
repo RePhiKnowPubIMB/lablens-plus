@@ -28,6 +28,20 @@ export async function analyzeBase64(base64Image, mimeType = "image/jpeg") {
 }
 
 /**
+ * Upload a medical/lab report image for AI analysis.
+ * Returns { success, report: { report_type, findings, abnormal_findings,
+ *   problems, todolist, dontdolist, overall_assessment, ... } }.
+ */
+export async function analyzeMedicalReport(file) {
+  const formData = new FormData();
+  formData.append("document", file);
+  const { data } = await api.post("/analysis/report", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
+
+/**
  * Search medicines by name
  */
 export async function searchMedicine(query) {

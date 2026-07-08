@@ -1,0 +1,7 @@
+node_modules/
+.env
+dist/
+server/uploads/
+server/src/ai_engine/fine_tuned_model/
+__pycache__/
+*.pyc
